@@ -1,0 +1,18 @@
+# Web framework and dependencies
+Flask==3.0.2
+Werkzeug==3.0.1
+
+# AWS SDK
+boto3==1.34.41
+botocore==1.34.41
+
+# Audio processing
+sounddevice==0.4.6
+numpy==1.26.4
+wave==0.0.2
+
+# System monitoring (for optional energy tracking)
+psutil==5.9.8
+
+# Development tools (optional)
+python-dotenv==1.0.1
