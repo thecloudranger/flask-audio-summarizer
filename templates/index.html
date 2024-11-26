@@ -4,517 +4,73 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Audio Recorder</title>
-    <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        font-size: 14px;
-        line-height: 1.4;
-        max-width: 320px;
-        margin: 0 auto;
-        padding: 10px;
-      }
-
-      h1 {
-        font-size: 18px;
-        margin-bottom: 10px;
-      }
-
-      h2 {
-        font-size: 16px;
-        margin: 10px 0;
-      }
-
-      .input-group {
-        margin-bottom: 10px;
-      }
-
-      input[type="text"] {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 14px;
-      }
-
-      button {
-        width: 100%;
-        padding: 8px;
-        background: #0066cc;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 14px;
-        margin-bottom: 5px;
-        cursor: pointer;
-      }
-
-      button:disabled {
-        background: #cccccc;
-      }
-
-      .file-list {
-        margin: 10px 0;
-        border: 1px solid #eee;
-        border-radius: 4px;
-        max-height: 120px;
-        overflow-y: auto;
-      }
-
-      .file-item {
-        padding: 8px;
-        border-bottom: 1px solid #eee;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      .file-item:last-child {
-        border-bottom: none;
-      }
-
-      .content-view {
-        border: 1px solid #eee;
-        border-radius: 4px;
-        padding: 8px;
-        margin: 10px 0;
-        max-height: 150px;
-        overflow-y: auto;
-        font-size: 12px;
-      }
-
-      .status {
-        color: #666;
-        font-size: 12px;
-        text-align: center;
-        margin: 5px 0;
-      }
-
-      .recording-controls {
-        margin: 10px 0;
-      }
-
-      input[type="range"] {
-        width: 100%;
-        margin: 10px 0;
-      }
-
-      .duration-label {
-        font-size: 12px;
-        text-align: center;
-        display: block;
-      }
-
-      /* Audio Player Styles */
-      .audio-player {
-        margin: 10px 0;
-        padding: 10px;
-        border: 1px solid #eee;
-        border-radius: 4px;
-        background: #f8f9fa;
-        display: none; /* Hidden by default */
-      }
-
-      .audio-player.active {
-        display: block;
-      }
-
-      .player-title {
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 8px;
-        word-break: break-all;
-      }
-
-      .player-controls {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-
-      .player-controls button {
-        flex: 1;
-        padding: 6px;
-        font-size: 12px;
-        margin: 0;
-      }
-
-      .progress-bar {
-        width: 100%;
-        height: 4px;
-        background: #ddd;
-        border-radius: 2px;
-        cursor: pointer;
-        position: relative;
-      }
-
-      .progress {
-        width: 0%;
-        height: 100%;
-        background: #0066cc;
-        border-radius: 2px;
-        transition: width 0.1s linear;
-      }
-
-      .time-display {
-        display: flex;
-        justify-content: space-between;
-        font-size: 10px;
-        color: #666;
-        margin-top: 4px;
-      }
-
-      body {
-        transition: transform 0.3s ease-in-out, width 0.3s ease-in-out,
-          height 0.3s ease-in-out;
-      }
-
-      body.rotated {
-        transform: rotate(90deg);
-        transform-origin: left top;
-        width: 480px;
-        position: absolute;
-        top: 0;
-        left: 320px;
-      }
-
-      .rotate-button {
-        position: fixed;
-        bottom: 10px;
-        right: 10px;
-        width: auto !important;
-        padding: 8px 12px !important;
-        z-index: 1000;
-        background: rgba(0, 102, 204, 0.8) !important;
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
-        border-radius: 20px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 14px;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: transparent;
-      }
-
-      .rotate-button:active {
-        transform: scale(0.95);
-      }
-
-      .rotate-icon {
-        display: inline-block;
-        transition: transform 0.3s ease;
-      }
-
-      body.rotated .rotate-icon {
-        transform: rotate(90deg);
-      }
-    </style>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
   </head>
   <body>
-    <button onclick="toggleRotation()" class="rotate-button">
-      <span class="rotate-icon">🔄</span>
-      <span>Rotate</span>
-    </button>
-    <h1>Audio Recorder</h1>
+    <div class="container">
+      <div class="left-panel">
+        <h1>Audio Recorder</h1>
 
-    <div class="input-group">
-      <input type="text" id="bucket" placeholder="Enter S3 bucket name" />
-      <button onclick="refreshFiles()">Refresh</button>
-    </div>
-
-    <div class="recording-controls">
-      <h2>Record Audio</h2>
-      <input type="range" id="duration" min="1" max="300" value="60" />
-      <span class="duration-label"
-        >Duration: <span id="durationValue">60</span> seconds</span
-      >
-      <button id="recordButton" onclick="startRecording()">
-        Start Recording
-      </button>
-      <div id="recordingStatus" class="status"></div>
-    </div>
-
-    <div>
-      <h2>Audio Files</h2>
-      <div id="audioFiles" class="file-list"></div>
-
-      <!-- Audio Player Section -->
-      <div id="audioPlayer" class="audio-player">
-        <div class="player-title" id="playerTitle"></div>
-        <div class="player-controls">
-          <button onclick="audioControl('play')">Play</button>
-          <button onclick="audioControl('pause')">Pause</button>
-          <button onclick="audioControl('stop')">Stop</button>
+        <div class="input-group">
+          <input type="text" id="bucket" placeholder="Enter S3 bucket name" />
+          <button onclick="refreshFiles()" class="refresh-btn">Refresh</button>
         </div>
-        <div class="progress-bar" id="progressBar">
-          <div class="progress" id="progress"></div>
+
+        <div class="recording-controls">
+          <h2>Record Audio</h2>
+          <input type="range" id="duration" min="1" max="300" value="60" />
+          <span class="duration-label"
+            >Duration: <span id="durationValue">60</span> seconds</span
+          >
+          <button
+            id="recordButton"
+            onclick="startRecording()"
+            class="record-btn"
+          >
+            Start Recording
+          </button>
+          <div id="recordingStatus" class="status"></div>
         </div>
-        <div class="time-display">
-          <span id="currentTime">0:00</span>
-          <span id="duration">0:00</span>
+
+        <div id="audioPlayer" class="audio-player">
+          <div class="player-title" id="playerTitle"></div>
+          <div class="player-controls">
+            <button onclick="audioControl('play')">Play</button>
+            <button onclick="audioControl('pause')">Pause</button>
+            <button onclick="audioControl('stop')">Stop</button>
+          </div>
+          <div class="progress-bar" id="progressBar">
+            <div class="progress" id="progress"></div>
+          </div>
+          <div class="time-display">
+            <span id="currentTime">0:00</span>
+            <span id="duration">0:00</span>
+          </div>
+          <audio id="audioElement"></audio>
         </div>
-        <audio id="audioElement"></audio>
+      </div>
+
+      <div class="right-panel">
+        <div class="files-section">
+          <h2>Audio Files</h2>
+          <div id="audioFiles" class="file-list"></div>
+
+          <h2>Transcripts</h2>
+          <div id="transcripts" class="file-list"></div>
+
+          <h2>Summaries</h2>
+          <div id="summaries" class="file-list"></div>
+        </div>
+
+        <div id="contentView" class="content-view"></div>
       </div>
     </div>
 
-    <div>
-      <h2>Transcripts</h2>
-      <div id="transcripts" class="file-list"></div>
-    </div>
-
-    <div>
-      <h2>Summaries</h2>
-      <div id="summaries" class="file-list"></div>
-    </div>
-
-    <div id="contentView" class="content-view" style="display: none"></div>
-
-    <script>
-      // Update duration display
-      document
-        .getElementById("duration")
-        .addEventListener("input", function (e) {
-          document.getElementById("durationValue").textContent = e.target.value;
-        });
-
-      let progressInterval;
-
-      function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        seconds = Math.floor(seconds % 60);
-        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-      }
-
-      function updateProgress() {
-        const audio = document.getElementById("audioElement");
-        const progress = document.getElementById("progress");
-        const currentTime = document.getElementById("currentTime");
-        const duration = document.getElementById("duration");
-
-        if (audio.duration) {
-          const percentage = (audio.currentTime / audio.duration) * 100;
-          progress.style.width = percentage + "%";
-          currentTime.textContent = formatTime(audio.currentTime);
-          duration.textContent = formatTime(audio.duration);
-        }
-      }
-
-      function audioControl(action) {
-        const audio = document.getElementById("audioElement");
-
-        switch (action) {
-          case "play":
-            audio.play();
-            break;
-          case "pause":
-            audio.pause();
-            break;
-          case "stop":
-            audio.pause();
-            audio.currentTime = 0;
-            break;
-        }
-      }
-
-      async function refreshFiles() {
-        const bucket = document.getElementById("bucket").value;
-        if (!bucket) {
-          alert("Please enter a bucket name");
-          return;
-        }
-
-        try {
-          const response = await fetch("/list_files", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bucket }),
-          });
-
-          const data = await response.json();
-
-          // Update audio files
-          document.getElementById("audioFiles").innerHTML = data.audio_files
-            .map(
-              (file) => `
-                        <div class="file-item">
-                            <span>${file}</span>
-                            <button onclick="playAudio('${file}')">Play</button>
-                        </div>
-                    `
-            )
-            .join("");
-
-          // Update transcripts
-          document.getElementById("transcripts").innerHTML = data.transcripts
-            .map(
-              (file) => `
-                        <div class="file-item">
-                            <span>${file}</span>
-                            <button onclick="viewContent('transcript', '${file}')">View</button>
-                        </div>
-                    `
-            )
-            .join("");
-
-          // Update summaries
-          document.getElementById("summaries").innerHTML = data.summaries
-            .map(
-              (file) => `
-                        <div class="file-item">
-                            <span>${file}</span>
-                            <button onclick="viewContent('summary', '${file}')">View</button>
-                        </div>
-                    `
-            )
-            .join("");
-        } catch (error) {
-          alert("Error refreshing files");
-          console.error(error);
-        }
-      }
-
-      async function playAudio(filename) {
-        const bucket = document.getElementById("bucket").value;
-        const player = document.getElementById("audioPlayer");
-        const playerTitle = document.getElementById("playerTitle");
-
-        try {
-          const response = await fetch("/get_content", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bucket, type: "audio", filename }),
-          });
-
-          const data = await response.json();
-          if (data.url) {
-            const audio = document.getElementById("audioElement");
-            audio.src = data.url;
-
-            // Show player and update title
-            player.className = "audio-player active";
-            playerTitle.textContent = filename;
-
-            // Set up progress tracking
-            clearInterval(progressInterval);
-            progressInterval = setInterval(updateProgress, 100);
-
-            // Add click handler for progress bar
-            document.getElementById("progressBar").onclick = function (e) {
-              const rect = this.getBoundingClientRect();
-              const x = e.clientX - rect.left;
-              const percentage = x / rect.width;
-              audio.currentTime = percentage * audio.duration;
-            };
-
-            // Play the audio
-            audio.play();
-          }
-        } catch (error) {
-          alert("Error playing audio");
-          console.error(error);
-        }
-      }
-
-      async function viewContent(type, filename) {
-        const bucket = document.getElementById("bucket").value;
-
-        try {
-          const response = await fetch("/get_content", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bucket, type, filename }),
-          });
-
-          const data = await response.json();
-          if (data.content) {
-            const contentView = document.getElementById("contentView");
-            contentView.style.display = "block";
-            contentView.innerHTML = `<h3>${filename}</h3><p>${data.content}</p>`;
-          }
-        } catch (error) {
-          alert("Error viewing content");
-          console.error(error);
-        }
-      }
-
-      async function startRecording() {
-        const bucket = document.getElementById("bucket").value;
-        if (!bucket) {
-          alert("Please enter a bucket name");
-          return;
-        }
-
-        const duration = document.getElementById("duration").value;
-        const recordButton = document.getElementById("recordButton");
-        const status = document.getElementById("recordingStatus");
-
-        recordButton.disabled = true;
-        status.textContent = "Recording in progress...";
-
-        try {
-          const response = await fetch("/start_recording", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bucket, duration }),
-          });
-
-          const data = await response.json();
-          if (data.success) {
-            status.textContent = "Recording completed and uploaded!";
-            refreshFiles();
-          } else {
-            status.textContent = "Recording failed: " + data.error;
-          }
-        } catch (error) {
-          status.textContent = "Error recording audio";
-          console.error(error);
-        } finally {
-          recordButton.disabled = false;
-        }
-      }
-
-      function toggleRotation() {
-        const body = document.body;
-        const icon = document.querySelector(".rotate-icon");
-
-        if (body.classList.contains("rotated")) {
-          body.classList.remove("rotated");
-          body.style.height = "";
-          body.style.width = "320px";
-          localStorage.setItem("pageRotation", "normal");
-        } else {
-          body.classList.add("rotated");
-          body.style.height = "320px";
-          body.style.width = "480px";
-          localStorage.setItem("pageRotation", "rotated");
-        }
-      }
-
-      // Restore rotation state on page load
-      document.addEventListener("DOMContentLoaded", () => {
-        const savedRotation = localStorage.getItem("pageRotation");
-        if (savedRotation === "rotated") {
-          toggleRotation();
-        }
-      });
-
-      // Prevent scrolling issues on iOS
-      document.addEventListener(
-        "touchmove",
-        function (e) {
-          if (document.body.classList.contains("rotated")) {
-            e.preventDefault();
-          }
-        },
-        { passive: false }
-      );
-    </script>
+    <script src="{{ url_for('static', filename='js/audioPlayer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/fileManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/recorder.js') }}"></script>
   </body>
 </html>
